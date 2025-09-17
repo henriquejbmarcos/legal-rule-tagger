@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Legal Rule Tagger</title>
   <style>
-    body { margin: 0; font-family: sans-serif; display: flex; height: 100vh; background: #0b0f14; color: #e8edf3; }
-    .panel { flex: 1; padding: 12px; box-sizing: border-box; border: 1px solid #2a3442; overflow-y: auto; background: #121821; }
-    #editor { border: 1px solid #2a3442; padding: 8px; min-height: 80vh; background: #0e141c; }
+    body { margin: 0; font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; background: #0b0f14; color: #e8edf3; }
+    .panel { padding: 12px; box-sizing: border-box; border: 1px solid #2a3442; background: #121821; color: #e8edf3; margin-bottom: 12px; }
+    #editor { border: 1px solid #2a3442; padding: 8px; min-height: 30vh; background: #0e141c; color: #e8edf3; }
     .toolbar { margin-bottom: 8px; }
     button { margin-right: 6px; background: #1b2430; color: #e8edf3; border: 1px solid #2a3442; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
     button:hover { background: #273245; }
@@ -19,42 +19,53 @@
     .note-box { width: 100%; min-height: 60px; margin-top: 4px; background: #0e141c; color: #e8edf3; border: 1px solid #2a3442; border-radius: 6px; padding: 6px; }
     .item { margin: 4px 0; }
     @media print {
-      body { background: white; color: black; }
-      .panel { border: none; }
-      button, .toolbar { display: none; }
-      .note-box { border: 1px solid #000; color: black; background: white; }
+      body { background: white; color: black; display: block; }
+      .toolbar, button { display: none !important; }
+      .panel { border: none; background: white; color: black; page-break-inside: avoid; }
+      #editor { border: 1px solid #000; background: white; color: black; min-height: auto; }
+      .note-box { border: 1px solid #000; background: white; color: black; }
+      /* Arrange vertically for print */
+      #printWrapper { display: flex; flex-direction: column; }
     }
   </style>
 </head>
 <body>
-  <!-- Left: editor and tagging -->
-  <div class="panel">
-    <div class="toolbar">
-      <button data-apply="cumulative">Cumulative Condition</button>
-      <button data-apply="alternative">Alternative Condition</button>
-      <button data-apply="consequence">Consequence</button>
-      <button id="clearAll">Clear All</button>
-      <button id="printPage">Print</button>
-    </div>
-    <div id="editor" contenteditable="true">
-      <p><em>Paste your legal text here and highlight sections to tag.</em></p>
-      <p><strong>Example:</strong> Every deficiency in the performance of an obligation obliges the debtor to compensate the creditor for the damage thereby caused to him, unless the deficiency cannot be attributed to the debtor.</p>
-    </div>
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <button data-apply="cumulative">Cumulative Condition</button>
+    <button data-apply="alternative">Alternative Condition</button>
+    <button data-apply="consequence">Consequence</button>
+    <button id="clearAll">Clear All</button>
+    <button id="printPage">Print</button>
   </div>
 
-  <!-- Right: extracted tags -->
-  <div class="panel" id="summary">
-    <h3>Consequence</h3>
-    <div id="consequenceList"></div>
-    <textarea class="note-box" placeholder="Notes on consequence..."></textarea>
+  <div id="printWrapper">
+    <!-- Editor on top -->
+    <div class="panel">
+      <div id="editor" contenteditable="true">
+        <p><em>Paste your legal text here and highlight sections to tag.</em></p>
+        <p><strong>Example:</strong> Every deficiency in the performance of an obligation obliges the debtor to compensate the creditor for the damage thereby caused to him, unless the deficiency cannot be attributed to the debtor.</p>
+      </div>
+    </div>
 
-    <h3>Cumulative Conditions</h3>
-    <div id="cumulativeList"></div>
-    <textarea class="note-box" placeholder="Notes on cumulative conditions..."></textarea>
+    <!-- Extracted tags vertically stacked -->
+    <div class="panel" id="summary">
+      <h3>Consequence</h3>
+      <div id="consequenceList"></div>
+      <textarea class="note-box" placeholder="Notes on consequence..."></textarea>
+    </div>
 
-    <h3>Alternative Conditions</h3>
-    <div id="alternativeList"></div>
-    <textarea class="note-box" placeholder="Notes on alternative conditions..."></textarea>
+    <div class="panel">
+      <h3>Cumulative Conditions</h3>
+      <div id="cumulativeList"></div>
+      <textarea class="note-box" placeholder="Notes on cumulative conditions..."></textarea>
+    </div>
+
+    <div class="panel">
+      <h3>Alternative Conditions</h3>
+      <div id="alternativeList"></div>
+      <textarea class="note-box" placeholder="Notes on alternative conditions..."></textarea>
+    </div>
   </div>
 
   <script>
