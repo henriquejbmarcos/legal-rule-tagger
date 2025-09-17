@@ -5,18 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Legal Rule Tagger</title>
   <style>
-    body { margin: 0; font-family: sans-serif; display: flex; height: 100vh; }
-    .panel { flex: 1; padding: 12px; box-sizing: border-box; border: 1px solid #ccc; overflow-y: auto; }
-    #editor { border: 1px solid #aaa; padding: 8px; min-height: 80vh; }
+    body { margin: 0; font-family: sans-serif; display: flex; height: 100vh; background: #0b0f14; color: #e8edf3; }
+    .panel { flex: 1; padding: 12px; box-sizing: border-box; border: 1px solid #2a3442; overflow-y: auto; background: #121821; }
+    #editor { border: 1px solid #2a3442; padding: 8px; min-height: 80vh; background: #0e141c; }
     .toolbar { margin-bottom: 8px; }
-    button { margin-right: 6px; }
+    button { margin-right: 6px; background: #1b2430; color: #e8edf3; border: 1px solid #2a3442; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+    button:hover { background: #273245; }
     .tag { padding: 0 .15em; border-radius: 4px; }
-    .tag[data-tag="cumulative"] { background: #fef3c7; border: 1px solid #facc15; }
-    .tag[data-tag="alternative"] { background: #fee2e2; border: 1px solid #f87171; }
-    .tag[data-tag="consequence"] { background: #dbeafe; border: 1px solid #60a5fa; }
-    h3 { margin-top: 0; }
-    .note-box { width: 100%; min-height: 60px; margin-top: 4px; }
+    .tag[data-tag="cumulative"] { background: #fef3c733; border: 1px solid #facc15; }
+    .tag[data-tag="alternative"] { background: #fee2e233; border: 1px solid #f87171; }
+    .tag[data-tag="consequence"] { background: #dbeafe33; border: 1px solid #60a5fa; }
+    h3 { margin-top: 0; color: #7aa2ff; }
+    .note-box { width: 100%; min-height: 60px; margin-top: 4px; background: #0e141c; color: #e8edf3; border: 1px solid #2a3442; border-radius: 6px; padding: 6px; }
     .item { margin: 4px 0; }
+    @media print {
+      body { background: white; color: black; }
+      .panel { border: none; }
+      button, .toolbar { display: none; }
+      .note-box { border: 1px solid #000; color: black; background: white; }
+    }
   </style>
 </head>
 <body>
@@ -27,6 +34,7 @@
       <button data-apply="alternative">Alternative Condition</button>
       <button data-apply="consequence">Consequence</button>
       <button id="clearAll">Clear All</button>
+      <button id="printPage">Print</button>
     </div>
     <div id="editor" contenteditable="true">
       <p><em>Paste your legal text here and highlight sections to tag.</em></p>
@@ -40,15 +48,20 @@
     <div id="consequenceList"></div>
     <textarea class="note-box" placeholder="Notes on consequence..."></textarea>
 
-    <h3>Conditions</h3>
-    <div id="conditionList"></div>
-    <textarea class="note-box" placeholder="Notes on conditions..."></textarea>
+    <h3>Cumulative Conditions</h3>
+    <div id="cumulativeList"></div>
+    <textarea class="note-box" placeholder="Notes on cumulative conditions..."></textarea>
+
+    <h3>Alternative Conditions</h3>
+    <div id="alternativeList"></div>
+    <textarea class="note-box" placeholder="Notes on alternative conditions..."></textarea>
   </div>
 
   <script>
     const editor = document.getElementById('editor');
     const consequenceList = document.getElementById('consequenceList');
-    const conditionList = document.getElementById('conditionList');
+    const cumulativeList = document.getElementById('cumulativeList');
+    const alternativeList = document.getElementById('alternativeList');
 
     function wrapSelection(tagType) {
       const sel = window.getSelection();
@@ -75,9 +88,11 @@
 
     function updateSummary() {
       consequenceList.innerHTML = '';
-      conditionList.innerHTML = '';
+      cumulativeList.innerHTML = '';
+      alternativeList.innerHTML = '';
       let consequenceCount = 1;
-      let conditionCount = 1;
+      let cumulativeCount = 1;
+      let alternativeCount = 1;
       editor.querySelectorAll('.tag').forEach(el => {
         const text = el.textContent.trim();
         const type = el.getAttribute('data-tag');
@@ -87,10 +102,14 @@
           div.textContent = consequenceCount + '. ' + text;
           consequenceList.appendChild(div);
           consequenceCount++;
-        } else {
-          div.textContent = conditionCount + '. ' + text;
-          conditionList.appendChild(div);
-          conditionCount++;
+        } else if (type === 'cumulative') {
+          div.textContent = cumulativeCount + '. ' + text;
+          cumulativeList.appendChild(div);
+          cumulativeCount++;
+        } else if (type === 'alternative') {
+          div.textContent = alternativeCount + '. ' + text;
+          alternativeList.appendChild(div);
+          alternativeCount++;
         }
       });
     }
@@ -99,6 +118,7 @@
       btn.addEventListener('click', () => wrapSelection(btn.dataset.apply));
     });
     document.getElementById('clearAll').addEventListener('click', clearAllTags);
+    document.getElementById('printPage').addEventListener('click', () => window.print());
 
     const obs = new MutationObserver(updateSummary);
     obs.observe(editor, { subtree: true, childList: true, characterData: true, attributes: true });
