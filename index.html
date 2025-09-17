@@ -118,7 +118,8 @@
           cumulativeList.appendChild(div);
           cumulativeCount++;
         } else if (type === 'alternative') {
-          div.textContent = alternativeCount + '. ' + text;
+          const letter = String.fromCharCode(64 + alternativeCount); // A=65
+          div.textContent = letter + '. ' + text;
           alternativeList.appendChild(div);
           alternativeCount++;
         }
