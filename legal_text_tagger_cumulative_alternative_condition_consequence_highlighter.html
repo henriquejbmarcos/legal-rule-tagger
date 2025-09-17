@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Legal Rule Tagger</title>
+  <style>
+    body { margin: 0; font-family: sans-serif; display: flex; height: 100vh; }
+    .panel { flex: 1; padding: 12px; box-sizing: border-box; border: 1px solid #ccc; overflow-y: auto; }
+    #editor { border: 1px solid #aaa; padding: 8px; min-height: 80vh; }
+    .toolbar { margin-bottom: 8px; }
+    button { margin-right: 6px; }
+    .tag { padding: 0 .15em; border-radius: 4px; }
+    .tag[data-tag="cumulative"] { background: #fef3c7; border: 1px solid #facc15; }
+    .tag[data-tag="alternative"] { background: #fee2e2; border: 1px solid #f87171; }
+    .tag[data-tag="consequence"] { background: #dbeafe; border: 1px solid #60a5fa; }
+    h3 { margin-top: 0; }
+    .note-box { width: 100%; min-height: 60px; margin-top: 4px; }
+    .item { margin: 4px 0; }
+  </style>
+</head>
+<body>
+  <!-- Left: editor and tagging -->
+  <div class="panel">
+    <div class="toolbar">
+      <button data-apply="cumulative">Cumulative Condition</button>
+      <button data-apply="alternative">Alternative Condition</button>
+      <button data-apply="consequence">Consequence</button>
+      <button id="clearAll">Clear All</button>
+    </div>
+    <div id="editor" contenteditable="true">
+      <p><em>Paste your legal text here and highlight sections to tag.</em></p>
+      <p><strong>Example:</strong> Every deficiency in the performance of an obligation obliges the debtor to compensate the creditor for the damage thereby caused to him, unless the deficiency cannot be attributed to the debtor.</p>
+    </div>
+  </div>
+
+  <!-- Right: extracted tags -->
+  <div class="panel" id="summary">
+    <h3>Consequence</h3>
+    <div id="consequenceList"></div>
+    <textarea class="note-box" placeholder="Notes on consequence..."></textarea>
+
+    <h3>Conditions</h3>
+    <div id="conditionList"></div>
+    <textarea class="note-box" placeholder="Notes on conditions..."></textarea>
+  </div>
+
+  <script>
+    const editor = document.getElementById('editor');
+    const consequenceList = document.getElementById('consequenceList');
+    const conditionList = document.getElementById('conditionList');
+
+    function wrapSelection(tagType) {
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0) return;
+      const range = sel.getRangeAt(0);
+      if (range.collapsed) return;
+
+      const span = document.createElement('span');
+      span.className = 'tag';
+      span.setAttribute('data-tag', tagType);
+      range.surroundContents(span);
+      sel.removeAllRanges();
+      updateSummary();
+    }
+
+    function clearAllTags() {
+      editor.querySelectorAll('.tag').forEach(el => {
+        const parent = el.parentNode;
+        while (el.firstChild) parent.insertBefore(el.firstChild, el);
+        el.remove();
+      });
+      updateSummary();
+    }
+
+    function updateSummary() {
+      consequenceList.innerHTML = '';
+      conditionList.innerHTML = '';
+      let consequenceCount = 1;
+      let conditionCount = 1;
+      editor.querySelectorAll('.tag').forEach(el => {
+        const text = el.textContent.trim();
+        const type = el.getAttribute('data-tag');
+        const div = document.createElement('div');
+        div.className = 'item';
+        if (type === 'consequence') {
+          div.textContent = consequenceCount + '. ' + text;
+          consequenceList.appendChild(div);
+          consequenceCount++;
+        } else {
+          div.textContent = conditionCount + '. ' + text;
+          conditionList.appendChild(div);
+          conditionCount++;
+        }
+      });
+    }
+
+    document.querySelectorAll('[data-apply]').forEach(btn => {
+      btn.addEventListener('click', () => wrapSelection(btn.dataset.apply));
+    });
+    document.getElementById('clearAll').addEventListener('click', clearAllTags);
+
+    const obs = new MutationObserver(updateSummary);
+    obs.observe(editor, { subtree: true, childList: true, characterData: true, attributes: true });
+  </script>
+</body>
+</html>
