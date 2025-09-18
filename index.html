@@ -6,41 +6,69 @@
   <title>Legal Rule Tagger</title>
   <style>
     body { margin: 0; font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; background: #0b0f14; color: #e8edf3; }
-    .panel { padding: 12px; box-sizing: border-box; border: 1px solid #2a3442; background: #121821; color: #e8edf3; margin-bottom: 12px; }
-    #editor { border: 1px solid #2a3442; padding: 8px; min-height: 30vh; background: #0e141c; color: #e8edf3; }
-    .toolbar { margin-bottom: 8px; }
+    header { text-align: center; margin: 10px 0; }
+    header h1 { margin: 0; font-size: 1.5em; color: #7aa2ff; }
+    footer { text-align: center; margin: 10px 0; font-size: 0.9em; color: #aaa; }
+    .panel { padding: 16px; box-sizing: border-box; border: 1px solid #2a3442; background: #121821; color: #e8edf3; margin: 12px 20px; border-radius: 8px; }
+    #editor { border: 1px solid #2a3442; padding: 8px; min-height: 30vh; background: #0e141c; color: #e8edf3; border-radius: 6px; }
+    .toolbar { margin: 0 20px 12px 20px; display: flex; justify-content: space-between; }
+    .left-buttons, .right-buttons { display: flex; }
     button { margin-right: 6px; background: #1b2430; color: #e8edf3; border: 1px solid #2a3442; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
     button:hover { background: #273245; }
+    .btn-cumulative { background: #fef3c733; border-color: #facc15; color: #facc15; }
+    .btn-alternative { background: #fee2e233; border-color: #f87171; color: #f87171; }
+    .btn-consequence { background: #dbeafe33; border-color: #60a5fa; color: #60a5fa; }
     .tag { padding: 0 .15em; border-radius: 4px; }
     .tag[data-tag="cumulative"] { background: #fef3c733; border: 1px solid #facc15; }
     .tag[data-tag="alternative"] { background: #fee2e233; border: 1px solid #f87171; }
     .tag[data-tag="consequence"] { background: #dbeafe33; border: 1px solid #60a5fa; }
     h3 { margin-top: 0; color: #7aa2ff; }
-    .note-box { width: 100%; min-height: 60px; margin-top: 4px; background: #0e141c; color: #e8edf3; border: 1px solid #2a3442; border-radius: 6px; padding: 6px; }
+    .note-box { width: 100%; min-height: 60px; margin-top: 6px; margin-bottom: 6px; background: #0e141c; color: #e8edf3; border: 1px solid #2a3442; border-radius: 6px; padding: 6px; }
     .item { margin: 4px 0; }
+
+    /* Mind map */
+    #mindMap { position: relative; height: 320px; background: #0e141c; border: 1px solid #2a3442; overflow: hidden; border-radius: 6px; }
+    .node { position: absolute; padding: 6px 10px; border: 2px solid transparent; border-radius: 6px; cursor: move; color: #e8edf3; user-select: none; max-width: 220px; white-space: normal; font-size: 14px; }
+    .node.cumulative { background: #fef3c733; border-color: #facc15; color: #facc15; }
+    .node.alternative { background: #fee2e233; border-color: #f87171; color: #f87171; }
+    .node.consequence { background: #dbeafe33; border-color: #60a5fa; color: #60a5fa; }
+
     @media print {
       body { background: white; color: black; display: block; }
       .toolbar, button { display: none !important; }
-      .panel { border: none; background: white; color: black; page-break-inside: avoid; }
+      header { text-align: center; margin-bottom: 10px; }
+      footer { display: none; }
+      .panel { border: none; background: white; color: black; page-break-inside: avoid; margin: 0 0 10px 0; }
       #editor { border: 1px solid #000; background: white; color: black; min-height: auto; }
       .note-box { border: 1px solid #000; background: white; color: black; }
-      /* Arrange vertically for print */
       #printWrapper { display: flex; flex-direction: column; }
+      #mindMap { border: 1px solid #000; background: white; color: black; height: auto; min-height: 200px; }
+      .node { border: 1px solid #000; background: #fff; color: #000; }
     }
   </style>
 </head>
 <body>
+  <header>
+    <h1>Legal Rule Tagger</h1>
+  </header>
+
   <!-- Toolbar -->
   <div class="toolbar">
-    <button data-apply="cumulative">Cumulative Condition</button>
-    <button data-apply="alternative">Alternative Condition</button>
-    <button data-apply="consequence">Consequence</button>
-    <button id="clearAll">Clear All</button>
-    <button id="printPage">Print</button>
+    <div class="left-buttons">
+      <button data-apply="cumulative" class="btn-cumulative">Cumulative Condition</button>
+      <button data-apply="alternative" class="btn-alternative">Alternative Condition</button>
+      <button data-apply="consequence" class="btn-consequence">Consequence</button>
+    </div>
+    <div class="right-buttons">
+      <button id="undoTag">Undo</button>
+      <button id="exportBtn">Export</button>
+      <input type="file" id="importInput" style="display:none" />
+      <button id="importBtn">Import</button>
+      <button id="printPage">Print</button>
+    </div>
   </div>
 
   <div id="printWrapper">
-    <!-- Editor on top -->
     <div class="panel">
       <div id="editor" contenteditable="true">
         <p><em>Paste your legal text here and highlight sections to tag.</em></p>
@@ -48,31 +76,76 @@
       </div>
     </div>
 
-    <!-- Extracted tags vertically stacked -->
     <div class="panel" id="summary">
       <h3>Consequence</h3>
       <div id="consequenceList"></div>
-      <textarea class="note-box" placeholder="Notes on consequence..."></textarea>
+      <textarea class="note-box" id="consequenceNotes" placeholder="Notes on consequence..."></textarea>
     </div>
 
     <div class="panel">
       <h3>Cumulative Conditions</h3>
       <div id="cumulativeList"></div>
-      <textarea class="note-box" placeholder="Notes on cumulative conditions..."></textarea>
+      <textarea class="note-box" id="cumulativeNotes" placeholder="Notes on cumulative conditions..."></textarea>
     </div>
 
     <div class="panel">
       <h3>Alternative Conditions</h3>
       <div id="alternativeList"></div>
-      <textarea class="note-box" placeholder="Notes on alternative conditions..."></textarea>
+      <textarea class="note-box" id="alternativeNotes" placeholder="Notes on alternative conditions..."></textarea>
+    </div>
+
+    <div class="panel">
+      <h3>Mind Map</h3>
+      <div id="mindMap" aria-label="Mind map area for draggable nodes"></div>
     </div>
   </div>
+
+  <footer>
+    <p>Created by Henrique Marcos (2025)</p>
+  </footer>
 
   <script>
     const editor = document.getElementById('editor');
     const consequenceList = document.getElementById('consequenceList');
     const cumulativeList = document.getElementById('cumulativeList');
     const alternativeList = document.getElementById('alternativeList');
+    const mindMap = document.getElementById('mindMap');
+    const consequenceNotes = document.getElementById('consequenceNotes');
+    const cumulativeNotes = document.getElementById('cumulativeNotes');
+    const alternativeNotes = document.getElementById('alternativeNotes');
+
+    let lastTag = null;
+
+    function toRoman(num) {
+      const map = {M:1000,CM:900,D:500,CD:400,C:100,XC:90,L:50,XL:40,X:10,IX:9,V:5,IV:4,I:1};
+      let str = '';
+      for (let i in map) {
+        while (num >= map[i]) {
+          str += i;
+          num -= map[i];
+        }
+      }
+      return str;
+    }
+
+    function makeDraggable(el) {
+      let startX = 0, startY = 0, originLeft = 0, originTop = 0;
+      el.addEventListener('mousedown', (e) => {
+        startX = e.clientX; startY = e.clientY;
+        originLeft = el.offsetLeft; originTop = el.offsetTop;
+        function onMove(ev) {
+          const dx = ev.clientX - startX; const dy = ev.clientY - startY;
+          el.style.left = (originLeft + dx) + 'px';
+          el.style.top = (originTop + dy) + 'px';
+        }
+        function onUp() {
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+        }
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      });
+    }
 
     function wrapSelection(tagType) {
       const sel = window.getSelection();
@@ -84,23 +157,26 @@
       span.className = 'tag';
       span.setAttribute('data-tag', tagType);
       range.surroundContents(span);
+      lastTag = span;
       sel.removeAllRanges();
       updateSummary();
     }
 
-    function clearAllTags() {
-      editor.querySelectorAll('.tag').forEach(el => {
-        const parent = el.parentNode;
-        while (el.firstChild) parent.insertBefore(el.firstChild, el);
-        el.remove();
-      });
-      updateSummary();
+    function undoTag() {
+      if (lastTag) {
+        const parent = lastTag.parentNode;
+        while (lastTag.firstChild) parent.insertBefore(lastTag.firstChild, lastTag);
+        parent.removeChild(lastTag);
+        lastTag = null;
+        updateSummary();
+      }
     }
 
     function updateSummary() {
       consequenceList.innerHTML = '';
       cumulativeList.innerHTML = '';
       alternativeList.innerHTML = '';
+      mindMap.innerHTML = '';
       let consequenceCount = 1;
       let cumulativeCount = 1;
       let alternativeCount = 1;
@@ -110,26 +186,91 @@
         const div = document.createElement('div');
         div.className = 'item';
         if (type === 'consequence') {
-          div.textContent = consequenceCount + '. ' + text;
+          const roman = toRoman(consequenceCount);
+          div.textContent = roman + '. ' + text;
           consequenceList.appendChild(div);
+          addNode(roman + '. ' + text, 'consequence');
           consequenceCount++;
         } else if (type === 'cumulative') {
           div.textContent = cumulativeCount + '. ' + text;
           cumulativeList.appendChild(div);
+          addNode(cumulativeCount + '. ' + text, 'cumulative');
           cumulativeCount++;
         } else if (type === 'alternative') {
           const letter = String.fromCharCode(64 + alternativeCount); // A=65
           div.textContent = letter + '. ' + text;
           alternativeList.appendChild(div);
+          addNode(letter + '. ' + text, 'alternative');
           alternativeCount++;
         }
       });
     }
 
+    function addNode(label, type) {
+      const node = document.createElement('div');
+      node.className = 'node ' + type;
+      node.textContent = label;
+      node.title = label;
+      const pad = 12;
+      const w = mindMap.clientWidth || 600;
+      const h = mindMap.clientHeight || 320;
+      node.style.left = Math.max(pad, Math.floor(Math.random() * (w - 220))) + 'px';
+      node.style.top  = Math.max(pad, Math.floor(Math.random() * (h - 40))) + 'px';
+      mindMap.appendChild(node);
+      makeDraggable(node);
+    }
+
+    // --- Export / Import ---
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      const data = {
+        editor: editor.innerHTML,
+        consequenceNotes: consequenceNotes.value,
+        cumulativeNotes: cumulativeNotes.value,
+        alternativeNotes: alternativeNotes.value,
+        nodes: Array.from(mindMap.querySelectorAll('.node')).map(n => ({
+          text: n.textContent,
+          type: n.className,
+          left: n.style.left,
+          top: n.style.top
+        }))
+      };
+      const blob = new Blob([JSON.stringify(data)], {type: 'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'legal_tagger.json';
+      a.click();
+    });
+
+    document.getElementById('importBtn').addEventListener('click', () => {
+      document.getElementById('importInput').click();
+    });
+
+    document.getElementById('importInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        const data = JSON.parse(evt.target.result);
+        editor.innerHTML = data.editor;
+        consequenceNotes.value = data.consequenceNotes || '';
+        cumulativeNotes.value = data.cumulativeNotes || '';
+        alternativeNotes.value = data.alternativeNotes || '';
+        mindMap.innerHTML = '';
+        (data.nodes || []).forEach(n => {
+          addNode(n.text, n.type.split(' ')[1]);
+          const node = mindMap.lastChild;
+          node.style.left = n.left;
+          node.style.top = n.top;
+        });
+        updateSummary();
+      };
+      reader.readAsText(file);
+    });
+
     document.querySelectorAll('[data-apply]').forEach(btn => {
       btn.addEventListener('click', () => wrapSelection(btn.dataset.apply));
     });
-    document.getElementById('clearAll').addEventListener('click', clearAllTags);
+    document.getElementById('undoTag').addEventListener('click', undoTag);
     document.getElementById('printPage').addEventListener('click', () => window.print());
 
     const obs = new MutationObserver(updateSummary);
