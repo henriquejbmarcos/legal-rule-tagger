@@ -10,7 +10,7 @@
     header h1 { margin: 0; font-size: 1.5em; color: #7aa2ff; }
     footer { text-align: center; margin: 10px 0; font-size: 0.9em; color: #aaa; }
     .panel { padding: 16px; box-sizing: border-box; border: 1px solid #2a3442; background: #121821; color: #e8edf3; margin: 12px 20px; border-radius: 8px; }
-    #editor { border: 1px solid #2a3442; padding: 8px; min-height: 30vh; background: #0e141c; color: #e8edf3; border-radius: 6px; }
+    #editor { border: 1px solid #2a3442; padding: 8px; min-height: 30vh; background: #0e141c; color: #e8edf3; border-radius: 6px; white-space: pre-wrap; }
     .toolbar { margin: 0 20px 12px 20px; display: flex; justify-content: space-between; }
     .left-buttons, .right-buttons { display: flex; }
     button { margin-right: 6px; background: #1b2430; color: #e8edf3; border: 1px solid #2a3442; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
@@ -115,6 +115,13 @@
     const alternativeNotes = document.getElementById('alternativeNotes');
 
     let lastTag = null;
+
+    // Force plain text paste
+    editor.addEventListener('paste', function (e) {
+      e.preventDefault();
+      const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+      document.execCommand('insertText', false, text);
+    });
 
     function toRoman(num) {
       const map = {M:1000,CM:900,D:500,CD:400,C:100,XC:90,L:50,XL:40,X:10,IX:9,V:5,IV:4,I:1};
