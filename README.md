@@ -2,7 +2,7 @@
 
 This tool was originally created for teaching the course Introduction to Law and Legal Reasoning for first-year law students in the European Law School at the Faculty of Law, Maastricht University.
 
-Created by Henrique Marcos, September 2025.
+Created by Henrique Marcos & Rohan Nanda, September 2025.
 
 ## Licence
 
