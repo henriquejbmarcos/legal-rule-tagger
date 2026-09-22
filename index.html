@@ -33,6 +33,37 @@
     .node.alternative { background: #fee2e233; border-color: #f87171; color: #f87171; }
     .node.consequence { background: #dbeafe33; border-color: #60a5fa; color: #60a5fa; }
 
+
+    /* ---- Light mode (additive: the dark theme above is untouched) ---- */
+    body.light { background: #ffffff; color: #111827; }
+    body.light header h1 { color: #1e3a8a; }
+    body.light footer { color: #555; }
+    body.light .panel { background: #ffffff; border-color: #d4d9e0; color: #111827; }
+    body.light #editor { background: #ffffff; border-color: #d4d9e0; color: #111827; }
+    body.light button { background: #f3f4f6; color: #111827; border-color: #d4d9e0; }
+    body.light button:hover { background: #e5e7eb; }
+    body.light .btn-cumulative { background: #fef3c7; border-color: #b45309; color: #92400e; }
+    body.light .btn-alternative { background: #fee2e2; border-color: #dc2626; color: #b91c1c; }
+    body.light .btn-consequence { background: #dbeafe; border-color: #2563eb; color: #1d4ed8; }
+    body.light .tag[data-tag="cumulative"] { background: #fef3c7; border-color: #b45309; }
+    body.light .tag[data-tag="alternative"] { background: #fee2e2; border-color: #dc2626; }
+    body.light .tag[data-tag="consequence"] { background: #dbeafe; border-color: #2563eb; }
+    body.light h3 { color: #1e3a8a; }
+    body.light .note-box { background: #ffffff; color: #111827; border-color: #d4d9e0; }
+    body.light #mindMap { background: #ffffff; border-color: #d4d9e0; }
+    body.light .node { color: #111827; }
+    body.light .node.cumulative { background: #fef3c7; border-color: #b45309; color: #92400e; }
+    body.light .node.alternative { background: #fee2e2; border-color: #dc2626; color: #b91c1c; }
+    body.light .node.consequence { background: #dbeafe; border-color: #2563eb; color: #1d4ed8; }
+
+    /* icon-only theme button */
+    #themeToggle { display: inline-flex; align-items: center; justify-content: center; padding: 6px 9px; }
+    #themeToggle svg { display: block; }
+
+    /* intro text inside the editor */
+    .intro-step { margin: .25em 0; }
+    .intro-quote { font-style: italic; }
+
     @media print {
       body { background: white; color: black; display: block; }
       .toolbar, button { display: none !important; }
@@ -65,15 +96,13 @@
       <input type="file" id="importInput" style="display:none" />
       <button id="importBtn">Import</button>
       <button id="printPage">Print</button>
+      <button id="themeToggle" type="button" aria-label="Switch to light mode" title="Switch to light mode"></button>
     </div>
   </div>
 
   <div id="printWrapper">
     <div class="panel">
-      <div id="editor" contenteditable="true">
-        <p><em>Paste your legal text here and highlight sections to tag.</em></p>
-        <p><strong>Example:</strong> Every deficiency in the performance of an obligation obliges the debtor to compensate the creditor for the damage thereby caused to him, unless the deficiency cannot be attributed to the debtor.</p>
-      </div>
+      <div id="editor" contenteditable="true"><p><strong>Paste your legal text here.</strong> Then select a part of it with the mouse and press one of the three buttons above to tag it.</p><p><strong>Try it first on this example:</strong></p><p class="intro-quote">A contract is formed if there is an offer and an acceptance, provided that the offer is made verbally or in writing.</p><p class="intro-step">1. Select <strong>&ldquo;A contract is formed&rdquo;</strong> and press <strong>Consequence</strong>. This is what the rule brings about.</p><p class="intro-step">2. Select <strong>&ldquo;an offer&rdquo;</strong>, then <strong>&ldquo;an acceptance&rdquo;</strong>, pressing <strong>Cumulative Condition</strong> each time. Both are needed for the consequence to follow.</p><p class="intro-step">3. Select <strong>&ldquo;verbally&rdquo;</strong>, then <strong>&ldquo;in writing&rdquo;</strong>, pressing <strong>Alternative Condition</strong> each time. Either one is enough.</p><p>The panels below fill in as you tag: the consequence, the cumulative conditions and the alternative conditions are listed separately, and each has a box where you can type your own notes. At the bottom, every tagged part also appears as a node in the mind map, which you can drag with the mouse into whatever arrangement shows the structure most clearly.</p><p><strong>Undo</strong> removes the last tag you made. <strong>Export</strong> saves your work as a file and <strong>Import</strong> opens it again later. <strong>Print</strong> produces a clean copy, or a PDF if you choose &ldquo;Save as PDF&rdquo; in the print dialogue.</p><p><strong>When you are ready, delete all of this text and paste your own.</strong></p></div>
     </div>
 
     <div class="panel" id="summary">
@@ -101,7 +130,7 @@
   </div>
 
   <footer>
-    <p>Created by Henrique Marcos & Rohan Nanda (2025)</p>
+    <p>Created by Henrique Marcos &amp; Rohan Nanda (2025)</p>
   </footer>
 
   <script>
@@ -279,6 +308,27 @@
     });
     document.getElementById('undoTag').addEventListener('click', undoTag);
     document.getElementById('printPage').addEventListener('click', () => window.print());
+
+
+    // --- Theme toggle: the icon shows the mode you will switch TO ---
+    const themeToggle = document.getElementById('themeToggle');
+    const SUN = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 1.8v2.4M12 19.8v2.4M1.8 12h2.4M19.8 12h2.4M4.8 4.8l1.7 1.7M17.5 17.5l1.7 1.7M19.2 4.8l-1.7 1.7M6.5 17.5l-1.7 1.7"/></svg>';
+    const MOON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.9A9 9 0 1 1 11.1 3a7 7 0 0 0 9.9 9.9z"/></svg>';
+    function applyTheme(mode) {
+      const light = mode === 'light';
+      document.body.classList.toggle('light', light);
+      themeToggle.innerHTML = light ? MOON : SUN;
+      const label = light ? 'Switch to dark mode' : 'Switch to light mode';
+      themeToggle.setAttribute('aria-label', label);
+      themeToggle.setAttribute('title', label);
+      try { localStorage.setItem('lrt-theme', mode); } catch (e) {}
+    }
+    let savedTheme = 'dark';
+    try { savedTheme = localStorage.getItem('lrt-theme') || 'dark'; } catch (e) {}
+    applyTheme(savedTheme);
+    themeToggle.addEventListener('click', () => {
+      applyTheme(document.body.classList.contains('light') ? 'dark' : 'light');
+    });
 
     const obs = new MutationObserver(updateSummary);
     obs.observe(editor, { subtree: true, childList: true, characterData: true, attributes: true });
