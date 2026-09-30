@@ -64,9 +64,24 @@
     .intro-step { margin: .25em 0; }
     .intro-quote { font-style: italic; }
 
+
+    /* help panel + hint line */
+    #helpPanel { display: none; }
+    #helpPanel.open { display: block; }
+    #helpPanel h3 { margin-top: 0; }
+    #helpPanel ol { margin: 6px 0 10px 0; padding-left: 22px; }
+    #helpPanel li { margin: 4px 0; }
+    #helpPanel p { margin: 8px 0; }
+    #helpPanel .example { font-style: italic; padding: 8px 10px; border-left: 3px solid #2a3442; margin: 8px 0; }
+    .hint { margin: 0 20px 8px 20px; font-size: 13px; min-height: 18px; color: #facc15; }
+    #editor[data-empty="true"]::before { content: "Paste your legal text here."; color: #6b7a86; }
+    body.light #helpPanel .example { border-left-color: #d4d9e0; }
+    body.light .hint { color: #b45309; }
+    body.light #editor[data-empty="true"]::before { color: #8a929c; }
+
     @media print {
       body { background: white; color: black; display: block; }
-      .toolbar, button { display: none !important; }
+      .toolbar, button, .hint, #helpPanel { display: none !important; }
       header { text-align: center; margin-bottom: 10px; }
       footer { display: none; }
       .panel { border: none; background: white; color: black; page-break-inside: avoid; margin: 0 0 10px 0; }
@@ -91,6 +106,7 @@
       <button data-apply="consequence" class="btn-consequence">Consequence</button>
     </div>
     <div class="right-buttons">
+      <button id="helpBtn" aria-expanded="false" title="Show or hide the instructions">Instructions</button>
       <button id="clearAll" title="Delete the text, the tags and the notes">Clear</button>
       <button id="undoTag">Undo</button>
       <button id="exportBtn">Export</button>
@@ -101,9 +117,26 @@
     </div>
   </div>
 
+  <div class="hint" id="hint" role="status" aria-live="polite"></div>
+
+  <div class="panel" id="helpPanel">
+    <h3>How to use this tool</h3>
+    <p>Paste your legal text into the box below. Then select a part of it with the mouse and press one of the three buttons at the top left to tag it.</p>
+    <p>Try it first on the example sentence that is already in the box:</p>
+    <p class="example">A contract is formed if there is an offer and an acceptance, provided that the offer is made verbally or in writing.</p>
+    <ol>
+      <li>Select <strong>&ldquo;A contract is formed&rdquo;</strong> and press <strong>Consequence</strong>. This is what the rule brings about.</li>
+      <li>Select <strong>&ldquo;an offer&rdquo;</strong>, then <strong>&ldquo;an acceptance&rdquo;</strong>, pressing <strong>Cumulative Condition</strong> each time. Both are needed.</li>
+      <li>Select <strong>&ldquo;verbally&rdquo;</strong>, then <strong>&ldquo;in writing&rdquo;</strong>, pressing <strong>Alternative Condition</strong> each time. Either one is enough.</li>
+    </ol>
+    <p>The panels below fill in as you tag: the consequence, the cumulative conditions and the alternative conditions are listed separately, and each has a box for your own notes. At the bottom, every tagged part appears as a node in the mind map, which you can drag with the mouse.</p>
+    <p><strong>Undo</strong> removes the last tag. <strong>Clear</strong> empties the box and the notes. <strong>Export</strong> saves your work as a file and <strong>Import</strong> opens it again later. <strong>Print</strong> produces a clean copy, or a PDF if you choose &ldquo;Save as PDF&rdquo;.</p>
+    <p><button id="loadExample" type="button">Put the example back in the box</button></p>
+  </div>
+
   <div id="printWrapper">
     <div class="panel">
-      <div id="editor" contenteditable="true"><p><strong>Paste your legal text here.</strong> Then select a part of it with the mouse and press one of the three buttons above to tag it.</p><p><strong>Try it first on this example:</strong></p><p class="intro-quote">A contract is formed if there is an offer and an acceptance, provided that the offer is made verbally or in writing.</p><p class="intro-step">1. Select <strong>&ldquo;A contract is formed&rdquo;</strong> and press <strong>Consequence</strong>. This is what the rule brings about.</p><p class="intro-step">2. Select <strong>&ldquo;an offer&rdquo;</strong>, then <strong>&ldquo;an acceptance&rdquo;</strong>, pressing <strong>Cumulative Condition</strong> each time. Both are needed for the consequence to follow.</p><p class="intro-step">3. Select <strong>&ldquo;verbally&rdquo;</strong>, then <strong>&ldquo;in writing&rdquo;</strong>, pressing <strong>Alternative Condition</strong> each time. Either one is enough.</p><p>The panels below fill in as you tag: the consequence, the cumulative conditions and the alternative conditions are listed separately, and each has a box where you can type your own notes. At the bottom, every tagged part also appears as a node in the mind map, which you can drag with the mouse into whatever arrangement shows the structure most clearly.</p><p><strong>Undo</strong> removes the last tag you made. <strong>Export</strong> saves your work as a file and <strong>Import</strong> opens it again later. <strong>Print</strong> produces a clean copy, or a PDF if you choose &ldquo;Save as PDF&rdquo; in the print dialogue.</p><p><strong>When you are ready, press &ldquo;Clear&rdquo; to delete all of this, then paste your own text.</strong></p></div>
+      <div id="editor" contenteditable="true"><p>A contract is formed if there is an offer and an acceptance, provided that the offer is made verbally or in writing.</p></div>
     </div>
 
     <div class="panel" id="summary">
@@ -184,16 +217,50 @@
       });
     }
 
+    const hintEl = document.getElementById('hint');
+    let hintTimer = null;
+    function hint(message) {
+      hintEl.textContent = message;
+      clearTimeout(hintTimer);
+      hintTimer = setTimeout(() => { hintEl.textContent = ''; }, 4000);
+    }
+
+    // Remove any tag spans that ended up inside a newly created one.
+    function unwrapNestedTags(root) {
+      root.querySelectorAll('.tag').forEach(inner => {
+        const parent = inner.parentNode;
+        while (inner.firstChild) parent.insertBefore(inner.firstChild, inner);
+        parent.removeChild(inner);
+      });
+    }
+
     function wrapSelection(tagType) {
       const sel = window.getSelection();
-      if (!sel || sel.rangeCount === 0) return;
+      if (!sel || sel.rangeCount === 0 || sel.isCollapsed) {
+        hint('Select a piece of text first, then press the button.');
+        return;
+      }
       const range = sel.getRangeAt(0);
-      if (range.collapsed) return;
+      if (!editor.contains(range.commonAncestorContainer)) {
+        hint('Select the text inside the box below the buttons.');
+        return;
+      }
 
       const span = document.createElement('span');
       span.className = 'tag';
       span.setAttribute('data-tag', tagType);
-      range.surroundContents(span);
+
+      try {
+        // Works when the selection sits inside a single element.
+        range.surroundContents(span);
+      } catch (e) {
+        // The selection crosses an element boundary - a line break, for instance.
+        // surroundContents refuses that, so extract the contents and re-insert them.
+        span.appendChild(range.extractContents());
+        range.insertNode(span);
+      }
+
+      unwrapNestedTags(span);
       lastTag = span;
       sel.removeAllRanges();
       updateSummary();
@@ -210,6 +277,10 @@
     }
 
     function updateSummary() {
+      // Only write the attribute when it actually changes: the MutationObserver
+      // below watches attributes, so an unconditional write would re-trigger itself.
+      const emptyNow = editor.textContent.trim() === '' ? 'true' : 'false';
+      if (editor.dataset.empty !== emptyNow) editor.dataset.empty = emptyNow;
       consequenceList.innerHTML = '';
       cumulativeList.innerHTML = '';
       alternativeList.innerHTML = '';
@@ -218,7 +289,9 @@
       let cumulativeCount = 1;
       let alternativeCount = 1;
       editor.querySelectorAll('.tag').forEach(el => {
-        const text = el.textContent.trim();
+        // innerText keeps the line breaks a tag may span, so two paragraphs do not
+        // run into each other in the lists below.
+        const text = (el.innerText || el.textContent).replace(/\s+/g, ' ').trim();
         const type = el.getAttribute('data-tag');
         const div = document.createElement('div');
         div.className = 'item';
@@ -310,7 +383,7 @@
     document.getElementById('clearAll').addEventListener('click', () => {
       const ok = window.confirm('Clear everything?\n\nThis deletes the text, the tags and your notes. Reload the page if you want the instructions and the example back.');
       if (!ok) return;
-      editor.innerHTML = '<p><br></p>';
+      editor.innerHTML = '';
       consequenceNotes.value = '';
       cumulativeNotes.value = '';
       alternativeNotes.value = '';
@@ -321,6 +394,29 @@
     document.getElementById('undoTag').addEventListener('click', undoTag);
     document.getElementById('printPage').addEventListener('click', () => window.print());
 
+
+    // --- Instructions panel (open on a first visit, then remembered) ---
+    const helpPanel = document.getElementById('helpPanel');
+    const helpBtn = document.getElementById('helpBtn');
+    const EXAMPLE = '<p>A contract is formed if there is an offer and an acceptance, provided that the offer is made verbally or in writing.</p>';
+    function showHelp(open) {
+      helpPanel.classList.toggle('open', open);
+      helpBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      helpBtn.textContent = open ? 'Hide instructions' : 'Instructions';
+      try { localStorage.setItem('lrt-help', open ? 'open' : 'closed'); } catch (e) {}
+    }
+    let savedHelp = 'open';
+    try { savedHelp = localStorage.getItem('lrt-help') || 'open'; } catch (e) {}
+    showHelp(savedHelp === 'open');
+    helpBtn.addEventListener('click', () => showHelp(!helpPanel.classList.contains('open')));
+
+    document.getElementById('loadExample').addEventListener('click', () => {
+      editor.innerHTML = EXAMPLE;
+      lastTag = null;
+      updateSummary();
+      editor.focus();
+      hint('The example is back in the box.');
+    });
 
     // --- Theme toggle: the icon shows the mode you will switch TO ---
     const themeToggle = document.getElementById('themeToggle');
@@ -341,6 +437,8 @@
     themeToggle.addEventListener('click', () => {
       applyTheme(document.body.classList.contains('light') ? 'dark' : 'light');
     });
+
+    updateSummary();
 
     const obs = new MutationObserver(updateSummary);
     obs.observe(editor, { subtree: true, childList: true, characterData: true, attributes: true });
