@@ -133,7 +133,7 @@
     <h3>How to use this tool</h3>
     <p>Paste your legal text into the box below. Then select a part of it with the mouse and press one of the three buttons at the top left to tag it.</p>
     <p>Try it first on the example sentence that is already in the box:</p>
-    <p class="example">A contract is formed if there is an offer and an acceptance, provided that the offer is made verbally or in writing.</p>
+    <p class="example">Example provision: A contract is formed if there is an offer and an acceptance, provided that the offer is made verbally or in writing.</p>
     <ol>
       <li>Select <strong>&ldquo;A contract is formed&rdquo;</strong> and press <strong>Consequence</strong>. This is what the rule brings about.</li>
       <li>Select <strong>&ldquo;an offer&rdquo;</strong>, then <strong>&ldquo;an acceptance&rdquo;</strong>, pressing <strong>Cumulative Condition</strong> each time. Both are needed.</li>
@@ -146,7 +146,7 @@
 
   <div id="printWrapper">
     <div class="panel">
-      <div id="editor" contenteditable="true"><p>A contract is formed if there is an offer and an acceptance, provided that the offer is made verbally or in writing.</p></div>
+      <div id="editor" contenteditable="true"><p>Example provision: A contract is formed if there is an offer and an acceptance, provided that the offer is made verbally or in writing.</p></div>
     </div>
 
     <div class="panel" id="summary">
@@ -408,7 +408,7 @@
     // --- Instructions panel (open on a first visit, then remembered) ---
     const helpPanel = document.getElementById('helpPanel');
     const helpBtn = document.getElementById('helpBtn');
-    const EXAMPLE = '<p>A contract is formed if there is an offer and an acceptance, provided that the offer is made verbally or in writing.</p>';
+    const EXAMPLE = '<p>Example provision: A contract is formed if there is an offer and an acceptance, provided that the offer is made verbally or in writing.</p>';
     function showHelp(open) {
       helpPanel.classList.toggle('open', open);
       helpBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
