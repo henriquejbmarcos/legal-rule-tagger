@@ -66,16 +66,26 @@
 
 
     /* help panel + hint line */
+    /* The instructions must not look like editable content: grey, smaller, muted. */
     #helpPanel { display: none; }
     #helpPanel.open { display: block; }
-    #helpPanel h3 { margin-top: 0; }
-    #helpPanel ol { margin: 6px 0 10px 0; padding-left: 22px; }
-    #helpPanel li { margin: 4px 0; }
-    #helpPanel p { margin: 8px 0; }
-    #helpPanel .example { font-style: italic; padding: 8px 10px; border-left: 3px solid #2a3442; margin: 8px 0; }
+    #helpPanel { background: #151b24; border: 1px dashed #33404f; color: #93a4b3;
+                 font-size: 13px; line-height: 1.5; padding: 12px 16px; }
+    #helpPanel h3 { margin: 0 0 6px 0; font-size: 13px; text-transform: uppercase;
+                    letter-spacing: .08em; color: #7d8ea0; font-weight: 600; }
+    #helpPanel ol { margin: 6px 0 8px 0; padding-left: 20px; }
+    #helpPanel li { margin: 3px 0; }
+    #helpPanel p { margin: 6px 0; }
+    #helpPanel strong { color: #b6c4d0; font-weight: 600; }
+    #helpPanel .example { font-style: italic; padding: 6px 10px; margin: 6px 0;
+                          background: #10161e; border-left: 3px solid #33404f; color: #8fa0ae; }
+    #helpPanel button { font-size: 12px; padding: 4px 9px; margin-top: 2px; }
     .hint { margin: 0 20px 8px 20px; font-size: 13px; min-height: 18px; color: #facc15; }
     #editor[data-empty="true"]::before { content: "Paste your legal text here."; color: #6b7a86; }
-    body.light #helpPanel .example { border-left-color: #d4d9e0; }
+    body.light #helpPanel { background: #f1f3f5; border-color: #d9dee4; color: #5b6772; }
+    body.light #helpPanel h3 { color: #77838f; }
+    body.light #helpPanel strong { color: #3f4a55; }
+    body.light #helpPanel .example { background: #e9edf1; border-left-color: #c3ccd5; color: #55616d; }
     body.light .hint { color: #b45309; }
     body.light #editor[data-empty="true"]::before { color: #8a929c; }
 
